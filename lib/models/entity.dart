@@ -1,3 +1,5 @@
+import 'package:elio/utils/otp.dart';
+
 class Entity {
   final String? email;
   final String? secret;
@@ -13,4 +15,9 @@ class Entity {
       name: Uri.tryParse(barcode)?.queryParameters['issuer'],
     );
   }
+
+  int getTOTP() => OTP.generateTOTPCode(
+        secret!, // 'DCFQFPZ4GAADHWKUZCRL2DDZNC4PTSAV'
+        DateTime.now().microsecondsSinceEpoch,
+      );
 }

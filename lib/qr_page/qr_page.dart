@@ -3,6 +3,7 @@ import 'package:elio/constants/app_constraints.dart';
 import 'package:elio/main_page/main_page.dart';
 import 'package:elio/models/entity.dart';
 import 'package:elio/qr_page/info_page.dart';
+import 'package:elio/utils/application.dart';
 import 'package:elio/utils/otp.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -26,20 +27,17 @@ class _QrCodeScannerState extends State<QrCodeScanner> {
 
   void _onQRViewCreated(QRViewController qrViewController) {
     _qrController = qrViewController;
+    bool _isLoading = false;
     _qrController?.scannedDataStream.listen((event) async {
-      if (isLoading) return;
+      if (_isLoading) return;
       if (event.code == null || event.code!.isEmpty) return;
-      setState(() => isLoading = true);
+      setState(() => _isLoading = true);
 
       final _entity = Entity.fromQR(event.code!);
       if (_entity.secret == null) return;
-
-      OTP.generateTOTPCode(
-        _entity.secret!, // 'DCFQFPZ4GAADHWKUZCRL2DDZNC4PTSAV'
-        DateTime.now().microsecondsSinceEpoch,
-      );
+      await Application.addBarcode(event.code!);
       Navigator.of(context).push(CupertinoPageRoute(builder: (context) => MainPage()));
-      setState(() => isLoading = false);
+      setState(() => _isLoading = false);
     });
   }
 
@@ -101,7 +99,6 @@ class _QrCodeScannerState extends State<QrCodeScanner> {
                         padding: EdgeInsets.zero,
                         icon: isFlashOn ? const Icon(Icons.flashlight_on, size: 32) : const Icon(Icons.flashlight_off, size: 32),
                         onPressed: () async {
-                          if (isLoading) return;
                           isFlashOn = await _qrController?.getFlashStatus() ?? false;
                           await _qrController?.toggleFlash();
                           setState(() {});
@@ -109,7 +106,7 @@ class _QrCodeScannerState extends State<QrCodeScanner> {
                       ),
                     ),
                   ),
-                  if (isLoading) CircularProgressIndicator.adaptive(),
+                  if (isLoading) const Center(child: CircularProgressIndicator.adaptive()),
                 ],
               ),
             )

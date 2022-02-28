@@ -2,6 +2,37 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class Application {
   static const _tokensKey = 'ElioTokensKey';
+  static const _barcodesKey = 'ElioBarcodesKey';
+
+  static Future<List<String>?> getBarcodes() async {
+    final _prefs = await SharedPreferences.getInstance();
+    return _prefs.getStringList(_barcodesKey);
+  }
+
+  static Future<void> addBarcode(String barcode) async {
+    final _prefs = await SharedPreferences.getInstance();
+    final _barcodes = (await getBarcodes() ?? []);
+    print('all $_barcodes');
+    print('adding $barcode');
+    if (_barcodes.contains(barcode)) return;
+    await _prefs.setStringList(_tokensKey, _barcodes..add(barcode));
+    print('commit');
+  }
+
+  static Future<bool> reset() async {
+    final _prefs = await SharedPreferences.getInstance();
+    return await _prefs.remove(_tokensKey);
+  }
+
+  static Future<bool> deleteBarcode(String barcode) async {
+    final _prefs = await SharedPreferences.getInstance();
+    final _barcodes = await getBarcodes() ?? [];
+    if (_barcodes.isEmpty || !_barcodes.contains(barcode)) return false;
+    _barcodes.remove(barcode);
+    return await _prefs.setStringList(_barcodesKey, _barcodes);
+  }
+
+  //
 
   static Future<List<String>?> getTokens() async {
     final _prefs = await SharedPreferences.getInstance();
