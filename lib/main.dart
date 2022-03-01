@@ -43,7 +43,7 @@ class App extends StatelessWidget {
         iconTheme: IconThemeData(color: AppColors.blue),
         cupertinoOverrideTheme: CupertinoThemeData(primaryColor: AppColors.blue),
         scaffoldBackgroundColor: AppColors.background,
-        brightness: Brightness.light,
+        brightness: Brightness.dark,
       ),
     );
   }

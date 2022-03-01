@@ -21,7 +21,14 @@ class _MainPageState extends State<MainPage> {
 
   Future<void> _getEntities() async {
     List<String> barcodes = await Application.getBarcodes() ?? [];
-    if (barcodes.isEmpty) return;
+    if (barcodes.isEmpty) {
+      setState(() => entities = []);
+      Navigator.of(context).pushReplacement(CupertinoPageRoute(
+        builder: (context) => QrCodeScanner(),
+      ));
+      return;
+    }
+    entities = [];
     barcodes.forEach((e) {
       entities.add(Entity.fromQR(e));
     });
@@ -41,9 +48,10 @@ class _MainPageState extends State<MainPage> {
         padding: EdgeInsets.zero,
         child: Icon(CupertinoIcons.add),
         onPressed: () async {
-          await Navigator.of(context).push(CupertinoPageRoute(
+          bool? response = await Navigator.of(context).push(CupertinoPageRoute(
             builder: (context) => QrCodeScanner(isAuthorized: true),
           ));
+          if (response == true) _getEntities();
         },
       ),
       body: SafeArea(
@@ -52,7 +60,7 @@ class _MainPageState extends State<MainPage> {
             padding: EdgeInsets.all(AppConstraints.padding),
             physics: const BouncingScrollPhysics(),
             itemCount: entities.length,
-            itemBuilder: (context, i) => EntityCard(entity: entities[i]),
+            itemBuilder: (context, i) => EntityCard(entity: entities[i], onUpdate: _getEntities),
           ),
         ),
       ),
@@ -62,7 +70,13 @@ class _MainPageState extends State<MainPage> {
 
 class EntityCard extends StatefulWidget {
   final Entity entity;
-  const EntityCard({Key? key, required this.entity}) : super(key: key);
+  final void Function() onUpdate;
+
+  const EntityCard({
+    Key? key,
+    required this.entity,
+    required this.onUpdate,
+  }) : super(key: key);
 
   @override
   _EntityCardState createState() => _EntityCardState();
@@ -76,8 +90,6 @@ class _EntityCardState extends State<EntityCard> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      print(DateTime.now().microsecondsSinceEpoch);
-      print(DateTime.fromMillisecondsSinceEpoch(DateTime.now().millisecondsSinceEpoch));
       setState(() => _code = '${widget.entity.getTOTP()}');
     });
   }
@@ -95,7 +107,7 @@ class _EntityCardState extends State<EntityCard> with TickerProviderStateMixin {
     double loaderValue = second * 100 / 30;
     return CupertinoButton(
       padding: EdgeInsets.all(AppConstraints.padding),
-      onPressed: _tryCopyToClipboard,
+      onPressed: showModal,
       child: Container(
         constraints: const BoxConstraints(maxHeight: 124),
         width: MediaQuery.of(context).size.width,
@@ -140,6 +152,63 @@ class _EntityCardState extends State<EntityCard> with TickerProviderStateMixin {
     );
   }
 
+  void showModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.transparent,
+      builder: (context) => Container(
+        constraints: const BoxConstraints(minHeight: 124),
+        padding: const EdgeInsets.all(AppConstraints.padding),
+        width: MediaQuery.of(context).size.width,
+        height: MediaQuery.of(context).size.height * 0.2,
+        decoration: const BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(12),
+            topRight: Radius.circular(12),
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: CupertinoButton(
+                padding: const EdgeInsets.all(8.0),
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: Text('Скопировать', textAlign: TextAlign.center),
+                ),
+                onPressed: () {
+                  _tryCopyToClipboard();
+                  Navigator.of(context).pop();
+                  _showSnackbar(context, 'Код скопирован', isSuccess: true);
+                },
+              ),
+            ),
+            Expanded(
+              child: CupertinoButton(
+                padding: const EdgeInsets.all(8.0),
+                child: SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: Text('Удалить', textAlign: TextAlign.center),
+                ),
+                onPressed: () async {
+                  if (widget.entity.barcode != null) {
+                    bool isSuccess = await Application.deleteBarcode(widget.entity.barcode!);
+                    widget.onUpdate();
+                    if (isSuccess) {
+                      Navigator.of(context).pop();
+                      _showSnackbar(context, '${widget.entity.name} удален');
+                    }
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _tryCopyToClipboard() async {
     try {
       await Clipboard.setData(ClipboardData(text: '${widget.entity.getTOTP()}'));
@@ -155,5 +224,17 @@ class _EntityCardState extends State<EntityCard> with TickerProviderStateMixin {
     } catch (e) {
       print('During copying to Clipboard, Error Occured: $e');
     }
+  }
+
+  void _showSnackbar(BuildContext context, String text, {bool isSuccess = false}) {
+    final snackBar = SnackBar(
+      content: Padding(
+        padding: const EdgeInsets.all(AppConstraints.padding / 2),
+        child: Text(text),
+      ),
+      duration: const Duration(milliseconds: 1200),
+      backgroundColor: isSuccess ? AppColors.green : AppColors.black.withOpacity(0.65),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

@@ -4,7 +4,6 @@ import 'package:elio/main_page/main_page.dart';
 import 'package:elio/models/entity.dart';
 import 'package:elio/qr_page/info_page.dart';
 import 'package:elio/utils/application.dart';
-import 'package:elio/utils/otp.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -25,21 +24,37 @@ class _QrCodeScannerState extends State<QrCodeScanner> {
   bool isFlashOn = false;
   bool isLoading = false;
 
-  void _onQRViewCreated(QRViewController qrViewController) {
+  void _onQRViewCreated(QRViewController qrViewController) async {
     _qrController = qrViewController;
-    bool _isLoading = false;
+    String? barcode = (await _qrController?.scannedDataStream.first)?.code;
+
+    final _entity = Entity.fromQR(barcode!);
+    if (_entity.secret == null) return;
+    await Application.addBarcode(barcode);
+
+    if (widget.isAuthorized) return Navigator.of(context).pop(true);
+
+    await _qrController!.stopCamera();
+    await Navigator.of(context).pushReplacement(CupertinoPageRoute(builder: (context) => MainPage()));
+    await _qrController!.resumeCamera();
+
+    _qrController = null;
+    return;
+  }
+
+  /*
     _qrController?.scannedDataStream.listen((event) async {
-      if (_isLoading) return;
+      if (isLoading) return;
       if (event.code == null || event.code!.isEmpty) return;
-      setState(() => _isLoading = true);
+      setState(() => isLoading = true);
 
       final _entity = Entity.fromQR(event.code!);
       if (_entity.secret == null) return;
       await Application.addBarcode(event.code!);
       Navigator.of(context).push(CupertinoPageRoute(builder: (context) => MainPage()));
-      setState(() => _isLoading = false);
+      setState(() => isLoading = false);
     });
-  }
+  */
 
   @override
   void initState() {
@@ -67,9 +82,13 @@ class _QrCodeScannerState extends State<QrCodeScanner> {
           CupertinoButton(
             padding: EdgeInsets.zero,
             child: const Icon(CupertinoIcons.question_circle),
-            onPressed: () => Navigator.of(context).push(
-              CupertinoPageRoute(builder: (context) => InfoPage()),
-            ),
+            onPressed: () async {
+              stopCamera();
+              await Navigator.of(context).push(
+                CupertinoPageRoute(builder: (context) => InfoPage()),
+              );
+              resumeCamera();
+            },
           ),
         ],
       ),
@@ -78,31 +97,13 @@ class _QrCodeScannerState extends State<QrCodeScanner> {
               child: Stack(
                 children: [
                   QRView(key: _qrKey, onQRViewCreated: _onQRViewCreated),
-                  Align(
-                    alignment: Alignment.center,
+                  Center(
                     child: Container(
-                      width: MediaQuery.of(context).size.width / 1.5,
-                      height: MediaQuery.of(context).size.width / 1.5,
+                      width: MediaQuery.of(context).size.width / 1.75,
+                      height: MediaQuery.of(context).size.width / 1.75,
                       decoration: BoxDecoration(
-                        color: AppColors.transparent,
-                        border: Border.all(width: 2.0, color: AppColors.yellow),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: Padding(
-                      padding: const EdgeInsets.all(AppConstraints.padding),
-                      child: IconButton(
-                        color: AppColors.grey.withOpacity(0.5),
-                        padding: EdgeInsets.zero,
-                        icon: isFlashOn ? const Icon(Icons.flashlight_on, size: 32) : const Icon(Icons.flashlight_off, size: 32),
-                        onPressed: () async {
-                          isFlashOn = await _qrController?.getFlashStatus() ?? false;
-                          await _qrController?.toggleFlash();
-                          setState(() {});
-                        },
+                        border: Border.all(width: 2.0, color: AppColors.blue),
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
                       ),
                     ),
                   ),

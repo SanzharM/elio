@@ -12,11 +12,8 @@ class Application {
   static Future<void> addBarcode(String barcode) async {
     final _prefs = await SharedPreferences.getInstance();
     final _barcodes = (await getBarcodes() ?? []);
-    print('all $_barcodes');
-    print('adding $barcode');
     if (_barcodes.contains(barcode)) return;
     await _prefs.setStringList(_barcodesKey, _barcodes..add(barcode));
-    print('commit');
   }
 
   static Future<bool> reset() async {
@@ -27,8 +24,10 @@ class Application {
   static Future<bool> deleteBarcode(String barcode) async {
     final _prefs = await SharedPreferences.getInstance();
     final _barcodes = await getBarcodes() ?? [];
+    print('all: $_barcodes');
     if (_barcodes.isEmpty || !_barcodes.contains(barcode)) return false;
     _barcodes.remove(barcode);
+    print('removed: $_barcodes');
     return await _prefs.setStringList(_barcodesKey, _barcodes);
   }
 
