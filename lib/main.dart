@@ -34,13 +34,15 @@ class App extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         appBarTheme: AppBarTheme(
-          color: AppColors.grey,
-          iconTheme: IconThemeData(color: AppColors.red),
-          actionsIconTheme: IconThemeData(color: AppColors.red),
+          color: AppColors.background,
+          iconTheme: IconThemeData(color: AppColors.blue),
+          actionsIconTheme: IconThemeData(color: AppColors.blue),
+          titleTextStyle: TextStyle(color: AppColors.blue),
+          elevation: 0,
         ),
-        iconTheme: IconThemeData(color: AppColors.red),
-        cupertinoOverrideTheme: CupertinoThemeData(primaryColor: AppColors.white),
-        scaffoldBackgroundColor: AppColors.grey,
+        iconTheme: IconThemeData(color: AppColors.blue),
+        cupertinoOverrideTheme: CupertinoThemeData(primaryColor: AppColors.blue),
+        scaffoldBackgroundColor: AppColors.background,
         brightness: Brightness.light,
       ),
     );

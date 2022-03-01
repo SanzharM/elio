@@ -18,6 +18,6 @@ class Entity {
 
   int getTOTP() => OTP.generateTOTPCode(
         secret!, // 'DCFQFPZ4GAADHWKUZCRL2DDZNC4PTSAV'
-        DateTime.now().microsecondsSinceEpoch,
+        DateTime.now().millisecondsSinceEpoch,
       );
 }

@@ -15,13 +15,13 @@ class Application {
     print('all $_barcodes');
     print('adding $barcode');
     if (_barcodes.contains(barcode)) return;
-    await _prefs.setStringList(_tokensKey, _barcodes..add(barcode));
+    await _prefs.setStringList(_barcodesKey, _barcodes..add(barcode));
     print('commit');
   }
 
   static Future<bool> reset() async {
     final _prefs = await SharedPreferences.getInstance();
-    return await _prefs.remove(_tokensKey);
+    return await _prefs.remove(_barcodesKey);
   }
 
   static Future<bool> deleteBarcode(String barcode) async {
