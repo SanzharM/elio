@@ -38,6 +38,10 @@ class App extends StatelessWidget {
           iconTheme: IconThemeData(color: AppColors.blue),
           actionsIconTheme: IconThemeData(color: AppColors.blue),
           titleTextStyle: TextStyle(color: AppColors.blue),
+          textTheme: TextTheme(
+            headline6: TextStyle(color: AppColors.blue, fontSize: 20, fontWeight: FontWeight.w700),
+            headline1: TextStyle(color: AppColors.blue, fontSize: 14, fontWeight: FontWeight.w700),
+          ),
           elevation: 0,
         ),
         iconTheme: IconThemeData(color: AppColors.blue),
